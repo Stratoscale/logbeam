@@ -1,0 +1,6 @@
+*.pyc
+*.swp
+build
+dist
+logbeam.egg-info
+.coverage
