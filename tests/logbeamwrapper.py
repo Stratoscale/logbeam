@@ -6,6 +6,7 @@ import shutil
 import signal
 import requests
 import socket
+from requests import auth
 import logbeam
 assert '/usr/' not in logbeam.__file__
 
@@ -48,10 +49,23 @@ class WebFrontend:
         self._popen = subprocess.Popen([
             "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "webfrontend",
             "--port", str(self.port)] +
-            ([] if not secure else ["--basicAuthUser=logs", "--basicAuthPassword=logs"]),
+            ([] if not secure else ["--basicAuthUser", "logs", "--basicAuthPassword", "logs"]),
             env=dict(
                 os.environ, LOGBEAM_CONFIG="UPLOAD_TRANSPORT: ftp\nHOSTNAME: localhost\nUSERNAME: logs\n"
                 "PASSWORD: logs\nPORT: %d\n" % self._server.port))
+        self._waitForServerToBeReady()
+
+    def _waitForServerToBeReady(self):
+        for i in xrange(10):
+            sock = socket.socket()
+            try:
+                sock.connect(("localhost", self.port))
+                return
+            except:
+                time.sleep(0.1)
+            finally:
+                sock.close()
+        raise Exception("Frontend did not start")
 
     def _freeTCPPort(self):
         sock = socket.socket()
@@ -68,7 +82,7 @@ class WebFrontend:
     def fetch(self, path):
         url = 'http://localhost:%d/%s' % (self.port, path)
         if self._secure:
-            request = requests.get(url, auth=('logs', 'logs'))
+            request = requests.get(url, auth=auth.HTTPBasicAuth('logs', 'logs'))
         else:
             request = requests.get(url)
         return request.content

@@ -11,7 +11,7 @@ class WebFrontend:
         if username is None:
             webserver.listenUnsecured(root, port)
         else:
-            webserver.listenSecured(root, port)
+            webserver.listenSecured(root, port, username, password)
 
     def go(self):
         reactor.run()

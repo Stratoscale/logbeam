@@ -6,7 +6,7 @@ from logbeam import config
 from logbeam import ftpserver
 from logbeam import webfrontend
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 parser = argparse.ArgumentParser()
 subparsers = parser.add_subparsers(dest="cmd")

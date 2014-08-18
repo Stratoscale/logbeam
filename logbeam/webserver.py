@@ -1,31 +1,55 @@
-from twisted.cred.portal import Portal
-from twisted.cred import checkers
 from twisted.internet import reactor
+from twisted.web import resource
 
-from zope.interface import implements
-from twisted.cred.portal import IRealm
-from twisted.web.resource import IResource
-from twisted.web.guard import HTTPAuthSessionWrapper, DigestCredentialFactory
 from twisted.web import server
+from twisted.web import http
+
+# based on http://twistedmatrix.com/pipermail/twisted-python/2003-July/005118.html
 
 
-class _PublicHTMLRealm(object):
-    implements(IRealm)
+class UnauthorizedResource(resource.Resource):
+    isLeaf = 1
 
-    def __init__(self, root):
-        self._root = root
+    def __init__(self, realm):
+        resource.Resource.__init__(self)
+        self.realm = realm
 
-    def requestAvatar(self, avatarId, mind, *interfaces):
-        if IResource in interfaces:
-            return (IResource, self._root, lambda: None)
-        raise NotImplementedError()
+    def render(self, request):
+        request.setResponseCode(http.UNAUTHORIZED)
+        request.setHeader('WWW-authenticate', 'basic realm="%s"' % self.realm)
+        return 'Unauthorized'
+
+
+class _HTTPBasicAuthWrapper(resource.Resource):
+    realm = 'site'
+
+    def __init__(self, resourceToWrap, username, password):
+        resource.Resource.__init__(self)
+        self._username = username
+        self._password = password
+        self._resourceToWrap = resourceToWrap
+
+    def getChildWithDefault(self, path, request):
+        if self._authenticateUser(request):
+            return self._resourceToWrap.getChildWithDefault(path, request)
+        else:
+            return self._unauthorized()
+
+    def render(self, request):
+        if self._authenticateUser(request):
+            return self._resourceToWrap.render(request)
+        else:
+            return self._unauthorized().render(request)
+
+    def _authenticateUser(self, request):
+        return request.getUser() == self._username and request.getPassword() == self._password
+
+    def _unauthorized(self):
+        return UnauthorizedResource(self.realm)
 
 
 def listenSecured(root, port, username, password):
-    checker = checkers.InMemoryUsernamePasswordDatabaseDontUse(** {username: password})
-    portal = Portal(_PublicHTMLRealm(root), [checker])
-    credentialFactory = DigestCredentialFactory("md5", "localhost:8080")
-    rootAuth = HTTPAuthSessionWrapper(portal, [credentialFactory])
+    rootAuth = _HTTPBasicAuthWrapper(root, username, password)
     reactor.listenTCP(port, server.Site(rootAuth))
 
 

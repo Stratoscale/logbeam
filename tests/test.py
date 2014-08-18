@@ -100,7 +100,6 @@ class Test(unittest.TestCase):
         self.assertFileAtServer("dmesg", "something")
         self.assertEquals(self.frontend.fetch("dmesg"), "something")
         self.assertIn(">dmesg<", self.frontend.fetch(""))
-        self.frontend.fetch("")
 
     def test_WebFrontend_FetchCompressedFile(self):
         self.writeFile("var/log/dmesg", "something")
@@ -108,6 +107,15 @@ class Test(unittest.TestCase):
         client.upload("var/log/dmesg")
         self.assertEquals(self.server.fileCount(), 1)
         self.assertFileCompressedAtServer("dmesg", "something")
+        self.assertEquals(self.frontend.fetch("dmesg"), "something")
+        self.assertIn(">dmesg<", self.frontend.fetch(""))
+
+    def test_WebFrontend_WithBasicHTTPAuthentication(self):
+        self.writeFile("var/log/dmesg", "something")
+        client = logbeamwrapper.FTP(self.playground, self.server)
+        client.upload("var/log/dmesg")
+        self.frontend.cleanup()
+        self.frontend = logbeamwrapper.WebFrontend(self.server, secure=True)
         self.assertEquals(self.frontend.fetch("dmesg"), "something")
         self.assertIn(">dmesg<", self.frontend.fetch(""))
 
