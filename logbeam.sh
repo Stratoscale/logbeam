@@ -1,2 +1,2 @@
 #!/bin/sh
-exec python -m upseto.main $@
+exec python -m logbeam.main $@

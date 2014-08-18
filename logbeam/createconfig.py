@@ -16,4 +16,4 @@ class CreateConfig:
         asDict = dict()
         for key in self._KEYS:
             asDict[key] = getattr(config, key)
-        return yaml.dump(asDict)
+        return yaml.dump(asDict, default_flow_style=False)
