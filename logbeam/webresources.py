@@ -13,8 +13,7 @@ class Folder(resource.Resource):
 
     def getChild(self, path, request):
         if path == "":
-            _DirectoryListingThread(request, self._filesystemAbstraction, self._path)
-            return server.NOT_DONE_YET
+            return _RenderDirectoryListing(self._filesystemAbstraction, self._path)
         relative = os.path.join(self._path, path)
         with self._filesystemAbstraction.filesystem() as fs:
             if fs.path.isdir(relative):
@@ -25,6 +24,17 @@ class Folder(resource.Resource):
                 return CompressedFile(self._filesystemAbstraction, relative)
             else:
                 raise Exception("'%s' was not found" % relative)
+
+
+class _RenderDirectoryListing(resource.Resource):
+    def __init__(self, filesystemAbstraction, path):
+        self._filesystemAbstraction = filesystemAbstraction
+        self._path = path
+        resource.Resource.__init__(self)
+
+    def render(self, request):
+        _DirectoryListingThread(request, self._filesystemAbstraction, self._path)
+        return server.NOT_DONE_YET
 
 
 class _DirectoryListingThread(threading.Thread):
@@ -41,11 +51,12 @@ class _DirectoryListingThread(threading.Thread):
             entries = []
             with self._filesystemAbstraction.filesystem() as fs:
                 for filename in fs.listdir(self._path):
-                    entry = _DIRECTORY_LISTING_ENTRY_TEMPLATE % dict(
-                        href="", text=filename, size=fs.stat(self._path).st_size)
+                    fullPath = os.path.join(self._path, filename)
+                    uncompressed = filename[: -len(".gz")] if filename.endswith(".gz") else filename
+                    size = "dir" if fs.path.isdir(fullPath) else fs.stat(fullPath).st_size
+                    entry = _DIRECTORY_LISTING_ENTRY_TEMPLATE % dict(href="", text=uncompressed, size=size)
                     entries.append(entry)
-            result = _DIRECTORY_LISTING_TEMPLATE % dict(
-                tableContent="\n".join(entries))
+            result = _DIRECTORY_LISTING_TEMPLATE % dict(tableContent="\n".join(entries))
             reactor.callFromThread(self._request.write, result)
         finally:
             reactor.callFromThread(self._request.finish)

@@ -99,6 +99,8 @@ class Test(unittest.TestCase):
         self.assertEquals(self.server.fileCount(), 1)
         self.assertFileAtServer("dmesg", "something")
         self.assertEquals(self.frontend.fetch("dmesg"), "something")
+        self.assertIn(">dmesg<", self.frontend.fetch(""))
+        self.frontend.fetch("")
 
     def test_WebFrontend_FetchCompressedFile(self):
         self.writeFile("var/log/dmesg", "something")
@@ -107,6 +109,7 @@ class Test(unittest.TestCase):
         self.assertEquals(self.server.fileCount(), 1)
         self.assertFileCompressedAtServer("dmesg", "something")
         self.assertEquals(self.frontend.fetch("dmesg"), "something")
+        self.assertIn(">dmesg<", self.frontend.fetch(""))
 
 
 if __name__ == '__main__':
