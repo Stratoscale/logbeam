@@ -107,13 +107,22 @@ class FTP:
 
     def upload(self, *paths, **kwargs):
         subprocess.check_call([
-            "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "upload"] +
-            [os.path.join(self._playground, p) for p in paths] +
+            "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "upload"] + list(paths) +
             (["--under", kwargs['under']] if 'under' in kwargs else []),
-            env=dict(
+            cwd=self._playground, env=dict(
                 os.environ,
                 LOGBEAM_CONFIG="UPLOAD_TRANSPORT: ftp\nHOSTNAME: localhost\nUSERNAME: logs\n"
                 "PASSWORD: logs\nPORT: %d\n%s\n%s\n" % (
                     self._server.port,
                     "COMPRESS: Yes" if self._compressed else "",
                     "BASE_DIRECTORY: %s" % self._baseDir if self._baseDir is not None else "")))
+
+    def createConfig(self, under):
+        created = subprocess.check_output([
+            "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "createConfig", "--under", under],
+            cwd=self._playground, env=dict(
+                os.environ,
+                LOGBEAM_CONFIG="UPLOAD_TRANSPORT: ftp\nHOSTNAME: localhost\nUSERNAME: logs\n"
+                "PASSWORD: logs\nPORT: %d\n" % self._server.port))
+        with open(os.path.join(self._playground, "logbeam.config"), "w") as f:
+            f.write(created)

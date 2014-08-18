@@ -5,6 +5,7 @@ from logbeam import upload
 from logbeam import config
 from logbeam import ftpserver
 from logbeam import webfrontend
+from logbeam import createconfig
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -37,6 +38,11 @@ webfrontendCmd.add_argument("--port", type=int, required=True)
 webfrontendCmd.add_argument("--fileToWritePortNumberTo")
 webfrontendCmd.add_argument("--basicAuthUser")
 webfrontendCmd.add_argument("--basicAuthPassword")
+createConfigCmd = subparsers.add_parser(
+    'createConfig',
+    help="Customize configuration after inheriting all current configuration"
+    " and output to stdout")
+createConfigCmd.add_argument("--under", help="put under a directory")
 args = parser.parse_args()
 
 config.load()
@@ -56,5 +62,10 @@ elif args.cmd == "webfrontend":
     frontend = webfrontend.WebFrontend(
         port=args.port, username=args.basicAuthUser, password=args.basicAuthPassword)
     frontend.go()
+elif args.cmd == 'createConfig':
+    created = createconfig.CreateConfig()
+    if args.under:
+        created.under(args.under)
+    print created.contents()
 else:
     assert False, "command mismatch"

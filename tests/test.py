@@ -119,6 +119,16 @@ class Test(unittest.TestCase):
         self.assertEquals(self.frontend.fetch("dmesg"), "something")
         self.assertIn(">dmesg<", self.frontend.fetch(""))
 
+    def test_CreateConfig(self):
+        self.writeFile("var/log/dmesg", "something")
+        client = logbeamwrapper.FTP(
+            self.playground, self.server, compressed=True)
+        client.createConfig("project/hash")
+        client.createConfig("build")
+        client.upload("var/log/dmesg", under="var_log")
+        self.assertEquals(self.server.fileCount(), 5)
+        self.assertFileCompressedAtServer("project/hash/build/var_log/dmesg", "something")
+
 
 if __name__ == '__main__':
     unittest.main()
