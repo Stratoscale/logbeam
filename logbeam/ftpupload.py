@@ -1,14 +1,11 @@
 from logbeam import config
-import ftputil
-import ftplib
+from logbeam import ftputilcustomport
 import os
 
 
 class FTPUpload:
     def __init__(self):
-        self._connection = ftputil.FTPHost(
-            host=config.HOSTNAME, user=config.USERNAME, passwd=config.PASSWORD,
-            port=config.PORT, session_factory=_Session)
+        self._connection = ftputilcustomport.FTPHost()
         if config.BASE_DIRECTORY:
             if not self._connection.path.isdir(config.BASE_DIRECTORY):
                 self._connection.makedirs(config.BASE_DIRECTORY)
@@ -33,10 +30,3 @@ class FTPUpload:
                 relativePath = fullPath[len(path) + len(os.path.sep):]
                 destination = os.path.join(destinationPath, relativePath)
                 self.file(fullPath, destination)
-
-
-class _Session(ftplib.FTP):
-    def __init__(self, host, user, passwd, port):
-        ftplib.FTP.__init__(self)
-        self.connect(host, port)
-        self.login(user, passwd)

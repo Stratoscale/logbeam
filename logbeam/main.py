@@ -1,10 +1,10 @@
 import argparse
 import logging
 import time
-import os
 from logbeam import upload
 from logbeam import config
 from logbeam import ftpserver
+from logbeam import webfrontend
 
 logging.basicConfig(level=logging.INFO)
 
@@ -34,6 +34,8 @@ webfrontendCmd = subparsers.add_parser(
     "that shows an uncompressed files, but send them GZIPped "
     "encoded")
 webfrontendCmd.add_argument("--port", type=int, required=True)
+webfrontendCmd.add_argument("--fileToWritePortNumberTo")
+webfrontendCmd.add_argument("--basicAuthUser")
 webfrontendCmd.add_argument("--basicAuthPassword")
 args = parser.parse_args()
 
@@ -51,6 +53,8 @@ elif args.cmd == "ftpserver":
     while True:
         time.sleep(10000000)
 elif args.cmd == "webfrontend":
-    raise AssertionError("Not implemented")
+    frontend = webfrontend.WebFrontend(
+        port=args.port, username=args.basicAuthUser, password=args.basicAuthPassword)
+    frontend.go()
 else:
     assert False, "command mismatch"

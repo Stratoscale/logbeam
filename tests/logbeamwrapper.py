@@ -4,6 +4,8 @@ import os
 import time
 import shutil
 import signal
+import requests
+import socket
 import logbeam
 assert '/usr/' not in logbeam.__file__
 
@@ -38,6 +40,40 @@ class FTPServer:
         return count
 
 
+class WebFrontend:
+    def __init__(self, ftpServer, secure=False):
+        self._server = ftpServer
+        self._secure = secure
+        self.port = self._freeTCPPort()
+        self._popen = subprocess.Popen([
+            "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "webfrontend",
+            "--port", str(self.port)] +
+            ([] if not secure else ["--basicAuthUser=logs", "--basicAuthPassword=logs"]),
+            env=dict(
+                os.environ, LOGBEAM_CONFIG="UPLOAD_TRANSPORT: ftp\nHOSTNAME: localhost\nUSERNAME: logs\n"
+                "PASSWORD: logs\nPORT: %d\n" % self._server.port))
+
+    def _freeTCPPort(self):
+        sock = socket.socket()
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind(("", 0))
+            return sock.getsockname()[1]
+        finally:
+            sock.close()
+
+    def cleanup(self):
+        self._popen.send_signal(signal.SIGINT)
+
+    def fetch(self, path):
+        url = 'http://localhost:%d/%s' % (self.port, path)
+        if self._secure:
+            request = requests.get(url, auth=('logs', 'logs'))
+        else:
+            request = requests.get(url)
+        return request.content
+
+
 class Null:
     def __init__(self, playground):
         self._playground = playground
@@ -49,7 +85,7 @@ class Null:
 
 
 class FTP:
-    def __init__(self, playground, server, compressed, baseDir=None):
+    def __init__(self, playground, server, compressed=False, baseDir=None):
         self._playground = playground
         self._server = server
         self._compressed = compressed

@@ -10,8 +10,10 @@ class Test(unittest.TestCase):
     def setUp(self):
         self.playground = tempfile.mkdtemp()
         self.server = logbeamwrapper.FTPServer()
+        self.frontend = logbeamwrapper.WebFrontend(self.server)
 
     def tearDown(self):
+        self.frontend.cleanup()
         self.server.cleanup()
         shutil.rmtree(self.playground, ignore_errors=True)
 
@@ -89,6 +91,22 @@ class Test(unittest.TestCase):
         client.upload("var/log/dmesg", under="var_log")
         self.assertEquals(self.server.fileCount(), 5)
         self.assertFileCompressedAtServer("project/hash/build/var_log/dmesg", "something")
+
+    def test_WebFrontend_FetchNonCompressedFile(self):
+        self.writeFile("var/log/dmesg", "something")
+        client = logbeamwrapper.FTP(self.playground, self.server)
+        client.upload("var/log/dmesg")
+        self.assertEquals(self.server.fileCount(), 1)
+        self.assertFileAtServer("dmesg", "something")
+        self.assertEquals(self.frontend.fetch("dmesg"), "something")
+
+    def test_WebFrontend_FetchCompressedFile(self):
+        self.writeFile("var/log/dmesg", "something")
+        client = logbeamwrapper.FTP(self.playground, self.server, compressed=True)
+        client.upload("var/log/dmesg")
+        self.assertEquals(self.server.fileCount(), 1)
+        self.assertFileCompressedAtServer("dmesg", "something")
+        self.assertEquals(self.frontend.fetch("dmesg"), "something")
 
 
 if __name__ == '__main__':
