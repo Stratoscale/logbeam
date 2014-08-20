@@ -26,4 +26,5 @@ setup(
         "pyftpdlib",
         "twisted",
     ],
+    zip_safe=False,
 )
