@@ -11,9 +11,13 @@ class Folder(resource.Resource):
         self._path = path
         resource.Resource.__init__(self)
 
+    def render(self, request):
+        _DirectoryListingThread(request, self._filesystemAbstraction, self._path)
+        return server.NOT_DONE_YET
+
     def getChild(self, path, request):
         if path == "":
-            return _RenderDirectoryListing(self._filesystemAbstraction, self._path)
+            return self
         relative = os.path.join(self._path, path)
         with self._filesystemAbstraction.filesystem() as fs:
             if fs.path.isdir(relative):
@@ -24,17 +28,6 @@ class Folder(resource.Resource):
                 return CompressedFile(self._filesystemAbstraction, relative)
             else:
                 raise Exception("'%s' was not found" % relative)
-
-
-class _RenderDirectoryListing(resource.Resource):
-    def __init__(self, filesystemAbstraction, path):
-        self._filesystemAbstraction = filesystemAbstraction
-        self._path = path
-        resource.Resource.__init__(self)
-
-    def render(self, request):
-        _DirectoryListingThread(request, self._filesystemAbstraction, self._path)
-        return server.NOT_DONE_YET
 
 
 class _DirectoryListingThread(threading.Thread):
@@ -56,7 +49,7 @@ class _DirectoryListingThread(threading.Thread):
                     uncompressed = filename[: -len(".gz")] if filename.endswith(".gz") else filename
                     size = "dir" if fs.path.isdir(fullPath) else fs.stat(fullPath).st_size
                     entry = _DIRECTORY_LISTING_ENTRY_TEMPLATE % dict(
-                        href=fullPathUncompressed, text=uncompressed, size=size)
+                        href="/" + fullPathUncompressed, text=uncompressed, size=size)
                     entries.append(entry)
             result = _DIRECTORY_LISTING_TEMPLATE % dict(tableContent="\n".join(entries))
             reactor.callFromThread(self._request.write, result)
