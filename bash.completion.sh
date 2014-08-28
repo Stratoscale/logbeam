@@ -1,6 +1,6 @@
 _logbeam()
 {
-  _script_commands="upload"
+  _script_commands="upload webfrontend ftpserver"
 
   local cur prev
   COMPREPLY=()

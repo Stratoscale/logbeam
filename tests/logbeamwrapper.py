@@ -9,6 +9,12 @@ import socket
 from requests import auth
 import logbeam
 assert '/usr/' not in logbeam.__file__
+import string
+import yaml
+from logbeam import config
+
+
+DEFAULT_CONFIG = {k: v for k, v in config.__dict__.iteritems() if k[0] in string.ascii_uppercase}
 
 
 class FTPServer:
@@ -52,7 +58,7 @@ class WebFrontend:
             ([] if not secure else ["--basicAuthUser", "logs", "--basicAuthPassword", "logs"]),
             env=dict(
                 os.environ, LOGBEAM_CONFIG="UPLOAD_TRANSPORT: ftp\nHOSTNAME: localhost\nUSERNAME: logs\n"
-                "PASSWORD: logs\nPORT: %d\n" % self._server.port))
+                "PASSWORD: logs\nPORT: %d\nBASE_DIRECTORY: ''" % self._server.port))
         self._waitForServerToBeReady()
 
     def _waitForServerToBeReady(self):
@@ -104,6 +110,11 @@ class FTP:
         self._server = server
         self._compressed = compressed
         self._baseDir = baseDir
+        self._avoidBuildEnvironmentConfiguration()
+
+    def _avoidBuildEnvironmentConfiguration(self):
+        with open(os.path.join(self._playground, "logbeam.config"), "w") as f:
+            f.write(yaml.dump(DEFAULT_CONFIG, default_flow_style=False))
 
     def upload(self, *paths, **kwargs):
         subprocess.check_call([
