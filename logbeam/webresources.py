@@ -2,6 +2,7 @@ from twisted.web import resource
 from twisted.web import server
 import os
 import threading
+import mimetypes
 from twisted.internet import reactor
 
 
@@ -64,6 +65,7 @@ class UncompressedFile(resource.Resource):
         resource.Resource.__init__(self)
 
     def render_GET(self, request):
+	request.setHeader('Content-Type', mimetypes.guess_type(self._path))
         _StreamThread(request, self._filesystemAbstraction, self._path)
         return server.NOT_DONE_YET
 
@@ -99,6 +101,7 @@ class CompressedFile(resource.Resource):
 
     def render_GET(self, request):
         request.setHeader('Content-Encoding', 'gzip')
+	request.setHeader('Content-Type', mimetypes.guess_type(self._path))
         _StreamThread(request, self._filesystemAbstraction, self._compressedPath)
         return server.NOT_DONE_YET
 
