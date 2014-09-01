@@ -5,6 +5,7 @@ import gzip
 import os
 import concurrent.futures
 import multiprocessing
+import logging
 
 
 class CompressedFTPUpload:
@@ -27,6 +28,13 @@ class CompressedFTPUpload:
         finally:
             self._free(ftp)
 
+    def _exceptionPrintingFile(self, *args):
+        try:
+            return self.file(*args)
+        except:
+            logging.exception("Transferring file failed '%(args)s'", dict(args=args))
+            raise
+
     def directory(self, path, destinationPath):
         with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
             todo = []
@@ -35,7 +43,7 @@ class CompressedFTPUpload:
                     fullPath = os.path.join(root, filename)
                     relativePath = fullPath[len(path) + len(os.path.sep):]
                     destination = os.path.join(destinationPath, relativePath)
-                    todo.append(executor.submit(self.file, fullPath, destination))
+                    todo.append(executor.submit(self._exceptionPrintingFile, fullPath, destination))
             for item in todo:
                 item.result()
 
