@@ -24,6 +24,7 @@ class FTPUpload:
         self._connection.upload(path, destinationPath)
 
     def directory(self, path, destinationPath):
+        path = path.rstrip(os.path.sep)
         for root, dirs, files in os.walk(path):
             for filename in files:
                 fullPath = os.path.join(root, filename)

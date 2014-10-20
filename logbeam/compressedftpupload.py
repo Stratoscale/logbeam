@@ -36,6 +36,7 @@ class CompressedFTPUpload:
             raise
 
     def directory(self, path, destinationPath):
+        path = path.rstrip(os.path.sep)
         with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
             todo = []
             for root, dirs, files in os.walk(path):
