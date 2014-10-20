@@ -41,6 +41,17 @@ class _CompressedFTPFilesystem:
 class _CompressedFTPFilesystemPath:
     def __init__(self, fs):
         self._fs = fs
+        self.isdir = fs.isdir
 
     def exists(self, path):
         return self._fs.path.exists(path) or self._fs.path.exists(path + ".gz")
+
+    def isfile(self, path):
+        return self._fs.path.isfile(path) or self._fs.path.isfile(path + ".gz")
+
+    def walk(self, *args, **kwargs):
+        for root, dirs, files in self._fs.walk():
+            filesWithoutGZ = [
+                n[: -len(".gz")] if n.endswith(".gz") else n
+                for n in files]
+            yield root, dirs, filesWithoutGZ
