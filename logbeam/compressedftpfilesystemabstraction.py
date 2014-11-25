@@ -41,7 +41,7 @@ class _CompressedFTPFilesystem:
 class _CompressedFTPFilesystemPath:
     def __init__(self, fs):
         self._fs = fs
-        self.isdir = fs.isdir
+        self.isdir = fs.path.isdir
 
     def exists(self, path):
         return self._fs.path.exists(path) or self._fs.path.exists(path + ".gz")
