@@ -48,9 +48,15 @@ class _DirectoryListingThread(threading.Thread):
                     fullPath = os.path.join(self._path, filename)
                     fullPathUncompressed = fullPath[: -len(".gz")] if fullPath.endswith(".gz") else fullPath
                     uncompressed = filename[: -len(".gz")] if filename.endswith(".gz") else filename
+                    if fs.path.isdir(fullPath):
+                        size = "dir"
+                        suffix = "/"
+                    else:
+                        size = fs.stat(fullPath).st_size
+                        suffix = ""
                     size = "dir" if fs.path.isdir(fullPath) else fs.stat(fullPath).st_size
                     entry = _DIRECTORY_LISTING_ENTRY_TEMPLATE % dict(
-                        href="/" + fullPathUncompressed, text=uncompressed, size=size)
+                        href="/" + fullPathUncompressed + suffix, text=uncompressed, size=size)
                     entries.append(entry)
             result = _DIRECTORY_LISTING_TEMPLATE % dict(tableContent="\n".join(entries))
             reactor.callFromThread(self._request.write, result)
