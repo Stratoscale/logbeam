@@ -22,7 +22,7 @@ class FTPServer:
         portFile = tempfile.NamedTemporaryFile()
         self.directory = tempfile.mkdtemp()
         self._popen = subprocess.Popen([
-            "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "ftpserver",
+            "python", "-m", "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "ftpserver",
             "--fileToWritePortNumberTo", portFile.name,
             "--directory", self.directory])
         self._readPort(portFile)
@@ -53,7 +53,7 @@ class WebFrontend:
         self._secure = secure
         self.port = self._freeTCPPort()
         self._popen = subprocess.Popen([
-            "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "webfrontend",
+            "python", "-m", "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "webfrontend",
             "--port", str(self.port)] +
             ([] if not secure else ["--basicAuthUser", "logs", "--basicAuthPassword", "logs"]),
             env=dict(
@@ -100,7 +100,7 @@ class Null:
 
     def upload(self, *paths):
         subprocess.check_call([
-            "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "upload"] +
+            "python", "-m", "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "upload"] +
             [os.path.join(self._playground, p) for p in paths])
 
 
@@ -118,8 +118,8 @@ class FTP:
 
     def upload(self, *paths, **kwargs):
         subprocess.check_call([
-            "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "upload"] + list(paths) +
-            (["--under", kwargs['under']] if 'under' in kwargs else []),
+            "python", "-m", "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "upload"] +
+            list(paths) + (["--under", kwargs['under']] if 'under' in kwargs else []),
             cwd=self._playground, env=dict(
                 os.environ,
                 LOGBEAM_CONFIG="UPLOAD_TRANSPORT: ftp\nHOSTNAME: localhost\nUSERNAME: logs\n"
@@ -130,7 +130,8 @@ class FTP:
 
     def createConfig(self, under):
         created = subprocess.check_output([
-            "coverage", "run", "--parallel-mode", "-m", "logbeam.main", "createConfig", "--under", under],
+            "python", "-m", "coverage", "run", "--parallel-mode", "-m", "logbeam.main",
+            "createConfig", "--under", under],
             cwd=self._playground, env=dict(
                 os.environ,
                 LOGBEAM_CONFIG="UPLOAD_TRANSPORT: ftp\nHOSTNAME: localhost\nUSERNAME: logs\n"
