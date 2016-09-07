@@ -21,7 +21,7 @@ setup(
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
     ],
-    requires=[
+    install_requires=[
         "ftputil",
         "pyftpdlib",
         "twisted",
