@@ -7,7 +7,8 @@ def read(fname):
 
 setup(
     name="logbeam",
-    version="1.0",
+    # version="1.0",
+    git_version=True,
     author="Shlomo Matichin",
     author_email="shlomi@stratoscale.com",
     description=(
@@ -27,4 +28,8 @@ setup(
         "twisted",
     ],
     zip_safe=False,
+    data_files=[
+        ('/usr/bin/logbeam', ['logbeam.sh']),
+        ('/etc/bash_completion.d/logbeam.sh', ['bash.completion.sh'])
+    ]
 )
