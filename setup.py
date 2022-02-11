@@ -24,7 +24,7 @@ setup(
     install_requires=[
         "ftputil",
         "pyftpdlib",
-        "Twisted==20.3.0",
+        "Twisted==22.1.0",
     ],
     zip_safe=False,
 )
